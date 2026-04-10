@@ -1,0 +1,87 @@
+import { NavLink } from "react-router-dom";
+import "./EmployeeNavbar.css";
+
+function AdminNavbar() {
+  return (
+    <nav className="navbar navbar-expand-lg navbar-dark employee-navbar">
+      <div className="container">
+
+        <NavLink className="navbar-brand fw-bold brand-logo" to="/admin/AdminDashboard">
+          WorkStock
+        </NavLink>
+
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#adminNavbar"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+
+        <div className="collapse navbar-collapse" id="adminNavbar">
+          <ul className="navbar-nav ms-auto">
+
+            <li className="nav-item">
+              <NavLink to="/admin/AdminDashboard" className="nav-link">
+                Dashboard
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/admin/ManageProducts" className="nav-link">
+                Products
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/admin/ManageCustomer" className="nav-link">
+                Customers
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/admin/ManageEmployees" className="nav-link">
+                Employees
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/admin/ViewBills" className="nav-link">
+                Bills
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/admin/ManageExpenes" className="nav-link">
+                Expenses
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/admin/StockManagement" className="nav-link">
+                Stock
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/admin/Account" className="nav-link">
+                My Account
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink to="/login" className="nav-link logout-btn">
+                Logout
+              </NavLink>
+            </li>
+
+          </ul>
+
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+export default AdminNavbar;

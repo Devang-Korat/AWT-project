@@ -1,0 +1,170 @@
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import API from "../services/api";
+
+export default function CustomerForm() {
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [form, setForm] = useState({
+    name: "",
+    mobile: "",
+    email: "",
+    address: ""
+  });
+
+  const [errors, setErrors] = useState({});
+
+  // ======================
+  // HANDLE INPUT CHANGE
+  // ======================
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // ======================
+  // VALIDATION
+  // ======================
+  const validate = () => {
+    let newErrors = {};
+
+    // Name
+    if (!form.name.trim())
+      newErrors.name = "Name is required";
+
+    // Indian Mobile Validation (10 digits)
+    const mobileRegex = /^[6-9]\d{9}$/;
+    if (!mobileRegex.test(form.mobile))
+      newErrors.mobile = "Enter valid 10-digit mobile number";
+
+    // Email validation (optional but must be valid if entered)
+    if (!form.email.trim()) {
+      newErrors.email = "Email is required";
+    }
+    else if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)){
+      newErrors.email = "Invalid email format";
+    }
+
+    if(!form.address.trim()){
+      newErrors.address = "Address is required";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ======================
+  // SUBMIT
+  // ======================
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    try {
+
+      const res = await API.post("/customers", form);
+      const savedCustomer = res.data;
+
+      const { items, totalAmount } = location.state || {};
+
+      navigate("/employee/Billing", {
+        state: {
+          customer: savedCustomer,
+          items,
+          totalAmount
+        }
+      });
+
+    } catch (err) {
+      console.log(err);
+      alert("Error saving customer");
+    }
+  };
+
+  return (
+    <div
+      className="d-flex justify-content-center align-items-center border rounded p-4"
+      style={{
+        minHeight: "100vh",
+        background: "#111"
+      }}
+    >
+      <div
+        className="card shadow-lg p-4"
+        style={{
+          width: "450px",
+          background: "#1e1e1e",
+          color: "white",
+          borderRadius: "12px"
+        }}
+      >
+
+        <h4 className="text-center mb-4">
+          👤 Add Customer
+        </h4>
+
+        <form onSubmit={handleSubmit}>
+
+          <input
+            name="name"
+            className="form-control mb-1"
+            placeholder="Name"
+            value={form.name}
+            onChange={handleChange}
+          />
+          {errors.name && (
+            <small className="text-danger">
+              {errors.name}
+            </small>
+          )}
+
+          <input
+            name="mobile"
+            className="form-control mt-2 mb-1"
+            placeholder="Mobile Number"
+            value={form.mobile}
+            onChange={handleChange}
+          />
+          {errors.mobile && (
+            <small className="text-danger">
+              {errors.mobile}
+            </small>
+          )}
+
+          <input
+            name="email"
+            className="form-control mt-2 mb-1"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+          />
+          {errors.email && (
+            <small className="text-danger">
+              {errors.email}
+            </small>
+          )}
+
+          <textarea
+            name="address"
+            className="form-control mt-2"
+            placeholder="Address"
+            value={form.address}
+            onChange={handleChange}
+          />
+          {errors.address && (
+            <small className="text-danger">
+              {errors.address}
+            </small>
+          )}
+
+          <button className="btn btn-dark w-100 mt-4">
+            Save Customer & Continue
+          </button>
+
+        </form>
+
+      </div>
+    </div>
+  );
+}

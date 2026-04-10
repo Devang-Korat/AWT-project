@@ -1,0 +1,129 @@
+import { useState, useEffect } from "react";
+
+export default function ExpenseList() {
+  const [expenses, setExpenses] = useState([]);
+  const [error, setError] = useState("");
+
+  const fetchExpenses = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setError("Please login first");
+        return;
+      }
+
+      const res = await fetch("http://localhost:5000/api/expenses", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      // Handle unauthorized
+      if (res.status === 401) {
+        setError("Unauthorized. Please login again");
+        setExpenses([]);
+        return;
+      }
+
+      // Ensure array
+      setExpenses(Array.isArray(data) ? data : []);
+      setError("");
+
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch expenses");
+      setExpenses([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this expense?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      await fetch(`http://localhost:5000/api/expenses/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      fetchExpenses();
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div className="container py-4">
+      <h3 className="mb-4">Expense List</h3>
+
+      {error && (
+        <div className="alert alert-danger text-center">
+          {error}
+        </div>
+      )}
+
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <div className="table-responsive">
+
+            <table className="table table-bordered table-hover">
+              <thead className="table-dark">
+                <tr>
+                  <th>#</th>
+                  <th>Title</th>
+                  <th>Amount</th>
+                  <th>Description</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {expenses.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center text-muted">
+                      No Expenses Found
+                    </td>
+                  </tr>
+                ) : (
+                  expenses.map((exp, index) => (
+                    <tr key={exp._id}>
+                      <td>{index + 1}</td>
+                      <td>{exp.title}</td>
+                      <td>₹{exp.amount}</td>
+                      <td>{exp.description}</td>
+                      <td>
+                        {new Date(exp.expenseDate).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDelete(exp._id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+
+            </table>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

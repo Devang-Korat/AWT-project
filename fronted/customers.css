@@ -1,0 +1,310 @@
+import { useState, useEffect } from "react";
+import API from "../../services/api";
+
+export default function CustomerManagement() {
+
+  const [customers, setCustomers] = useState([]);
+
+  const [form, setForm] = useState({
+    name: "",
+    mobile: "",
+    email: "",
+    address: ""
+  });
+
+  const [errors, setErrors] = useState({});
+
+  const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  const fetchCustomers = async () => {
+    try {
+      const res = await API.get("/customers");
+      setCustomers(res.data);
+    } catch (error) {
+      console.log(error);
+      alert("Unauthorized or server error");
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+
+    setErrors({
+      ...errors,
+      [e.target.name]: ""
+    });
+  };
+
+  const validate = () => {
+    let newErrors = {};
+
+    if (!form.name.trim()) {
+      newErrors.name = "Name is required";
+    } else if (form.name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
+    } else if (!/^[A-Za-z\s]+$/.test(form.name)) {
+      newErrors.name = "Name can only contain letters";
+    }
+
+    if (!form.mobile) {
+      newErrors.mobile = "Mobile number is required";
+    } else if (!/^[0-9]{10}$/.test(form.mobile)) {
+      newErrors.mobile = "Mobile must be exactly 10 digits";
+    }
+
+    if (!form.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    if (!form.address.trim()) {
+      newErrors.address = "Address is required";
+    } else if (form.address.trim().length < 5) {
+      newErrors.address = "Address must be at least 5 characters";
+    }
+
+    return newErrors;
+  };
+
+  const saveCustomer = async (e) => {
+    e.preventDefault();
+
+    const validationErrors = validate();
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    try {
+      if (editingId) {
+        await API.put(`/customers/${editingId}`, form);
+      } else {
+        await API.post("/customers", form);
+      }
+
+      fetchCustomers();
+
+      setForm({
+        name: "",
+        mobile: "",
+        email: "",
+        address: ""
+      });
+
+      setErrors({});
+      setEditingId(null);
+      setShowForm(false);
+
+    } catch (error) {
+      alert(error.response?.data?.message || "Error occurred");
+    }
+  };
+
+  const editCustomer = (customer) => {
+    setForm({
+      name: customer.name || "",
+      mobile: customer.mobile || "",
+      email: customer.email || "",
+      address: customer.address || ""
+    });
+
+    setEditingId(customer._id);
+    setShowForm(true);
+  };
+
+  const deleteCustomer = async (id) => {
+    const confirmDelete = window.confirm("Are you sure?");
+    if (!confirmDelete) return;
+
+    try {
+      await API.delete(`/customers/${id}`);
+      fetchCustomers();
+    } catch (error) {
+      alert("Delete failed");
+    }
+  };
+
+  return (
+    <div className="bg-light min-vh-100 p-4">
+      <div className="container">
+
+        <div className="d-flex justify-content-between align-items-center mb-4">
+
+          <div>
+            <h3 className="fw-bold mb-0">Customer Management</h3>
+            <small className="text-muted">
+              Manage your customer records
+            </small>
+          </div>
+
+          <button
+            className="btn btn-dark"
+            onClick={() => {
+              setShowForm(!showForm);
+              setEditingId(null);
+              setForm({
+                name: "",
+                mobile: "",
+                email: "",
+                address: ""
+              });
+              setErrors({});
+            }}
+          >
+            Add Customer
+          </button>
+        </div>
+
+        {showForm && (
+          <div className="card shadow border-0 mb-4">
+
+            <div className="card-header bg-dark text-white">
+              {editingId ? "Edit Customer" : "Add Customer"}
+            </div>
+
+            <div className="card-body">
+              <form onSubmit={saveCustomer}>
+                <div className="row g-3">
+
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                    />
+                    {errors.name && (
+                      <small className="text-danger">{errors.name}</small>
+                    )}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Mobile</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="mobile"
+                      value={form.mobile}
+                      onChange={handleChange}
+                    />
+                    {errors.mobile && (
+                      <small className="text-danger">{errors.mobile}</small>
+                    )}
+                  </div>
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Email</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                    />
+                    {errors.email && (
+                      <small className="text-danger">{errors.email}</small>
+                    )}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label fw-semibold">Address</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="address"
+                      value={form.address}
+                      onChange={handleChange}
+                    />
+                    {errors.address && (
+                      <small className="text-danger">{errors.address}</small>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4 d-flex gap-2">
+                  <button className="btn btn-dark">
+                    Save Customer
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-outline-dark"
+                    onClick={() => setShowForm(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        <div className="card shadow border-0">
+          <div className="card-header bg-dark text-white">
+            Customer List
+          </div>
+          <div className="card-body p-0">
+            <table className="table table-striped mb-0">
+
+              <thead className="table-light">
+                <tr>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th>Email</th>
+                  <th>Address</th>
+                  <th width="150">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.length > 0 ? (
+                  customers.map((c) => (
+                    <tr key={c._id}>
+                      <td>{c.name}</td>
+                      <td>{c.mobile}</td>
+                      <td>{c.email}</td>
+                      <td>{c.address}</td>
+
+                      <td>
+                        <div className="d-flex gap-2">
+                          <button
+                            className="btn btn-sm btn-dark"
+                            onClick={() => editCustomer(c)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-dark"
+                            onClick={() => deleteCustomer(c._id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center text-muted py-3">
+                      No customers found
+                    </td>
+                  </tr>
+                )}
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
