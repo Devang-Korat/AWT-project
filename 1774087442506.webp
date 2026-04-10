@@ -1,0 +1,22 @@
+const mongoose = require("mongoose");
+
+const stockLogSchema = new mongoose.Schema({
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true
+  },
+  referenceId: mongoose.Schema.Types.ObjectId,
+  note: String,
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
+  },
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model("StockLogs", stockLogSchema, "stock_logs");
